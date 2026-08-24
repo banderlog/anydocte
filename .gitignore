@@ -1,0 +1,11 @@
+*cache*
+*.swp
+*venv*
+result
+
+.nixcage-vm/
+.opencode/
+experiments/
+*.egg-info/
+build/
+dist/
