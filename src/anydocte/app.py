@@ -64,7 +64,7 @@ def create_app(settings: Settings) -> FastAPI:
         loop = asyncio.get_running_loop()
         try:
             content, method = await loop.run_in_executor(
-                executor, lambda: extract(filename, file_bytes, settings)
+                executor, lambda: extract(file_bytes, settings)
             )
             logger.info(f"SUCCESS: Extracted '{filename}' [Method: {method}]")
             return {"page_content": content.strip(), "metadata": {}}

@@ -20,7 +20,7 @@ Pipeline by file type (dispatch lives in `src/anydocte/extractors/__init__.py`):
 | `.pdf` | pdf_inspector analysis; OCR fallback for scanned pages | `PDF Inspector / OCR` |
 | Everything else | anydoc → markdown | `Anydoc Native` |
 
-The project version is declared in **one** place: `pyproject.toml`
+The project version is declared in **one** place: `src/anydocte/__init__.py`
 (`[project] version`), mirrored in `src/anydocte/__init__.py`
 (`__version__`). Keep the two in sync.
 

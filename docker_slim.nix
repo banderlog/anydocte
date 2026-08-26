@@ -1,8 +1,8 @@
 { pkgs ? import <nixpkgs> {} }:
 
 let
-  pyproject = builtins.fromTOML (builtins.readFile ./pyproject.toml);
-  version = pyproject.project.version;
+  init_file = builtins.readFile src/anydocte/__init__.py;
+  version = builtins.head (builtins.match ".*__version__ = \"(.*)\".*" init_file);
 
   # Strip the default 350MB language bundle from the tesseract derivation
   tesseractSlim = pkgs.tesseract.overrideAttrs (old: {
@@ -24,12 +24,13 @@ let
     zlib
     glib
     cacert
-    bash
+    file
   ];
 
   libPath = pkgs.lib.makeLibraryPath [
     pkgs.zlib
     pkgs.glib
+    pkgs.file
   ];
 
   # Startup entrypoint

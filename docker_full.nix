@@ -1,8 +1,8 @@
 { pkgs ? import <nixpkgs> {} }:
 
 let
-  pyproject = builtins.fromTOML (builtins.readFile ./pyproject.toml);
-  version = pyproject.project.version;
+  init_file = builtins.readFile src/anydocte/__init__.py;
+  version = builtins.head (builtins.match ".*__version__ = \"(.*)\".*" init_file);
 
   runtimePackages = with pkgs; [
     python3
@@ -12,12 +12,13 @@ let
     zlib
     glib
     cacert
-    bash
+    file
   ];
 
   libPath = pkgs.lib.makeLibraryPath [
     pkgs.zlib
     pkgs.glib
+    pkgs.file
   ];
 
   # Startup entrypoint

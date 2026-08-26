@@ -24,6 +24,7 @@ in
     tesseract
     poppler-utils
     vim
+    file
   ];
 
   ## Adjust VM resources (defaults: 2 GB RAM, 2 vCPUs)

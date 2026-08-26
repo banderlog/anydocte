@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "anydocte"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Universal anydoc+tesseract document extraction proxy for Open WebUI"
 requires-python = ">=3.9"
 dependencies = [
@@ -15,6 +15,7 @@ dependencies = [
     "pdf2image>=1.17.0",
     "Pillow>=10.2.0",
     "pdf_inspector>=1.15.0",
+    "python-magic>=0.4.27"
 ]
 
 [project.optional-dependencies]
@@ -26,6 +27,9 @@ dev = [
 
 [project.scripts]
 anydocte = "anydocte.cli:main"
+
+[tool.hatch.version]
+path = "src/anydocte/__init__.py"
 
 [tool.setuptools.packages.find]
 where = ["src"]
