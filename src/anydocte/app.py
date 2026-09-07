@@ -23,7 +23,9 @@ def create_app(settings: Settings) -> FastAPI:
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         yield
-        executor.shutdown(wait=False)
+        # Drain in-flight extractions: an OCR job killed mid-flight would
+        # fail a request that was about to succeed.
+        executor.shutdown(wait=True)
 
     app = FastAPI(
         title="Open WebUI Universal Document Extraction Proxy",
