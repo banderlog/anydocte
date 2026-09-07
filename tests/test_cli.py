@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 import anydocte.cli as cli
 from anydocte.config import Settings
 
@@ -64,3 +66,25 @@ def test_main_wiring(monkeypatch):
     assert calls["port"] == 7777
     assert calls["reload"] is False
     assert calls["app"].state.settings.max_workers == 3
+
+
+@pytest.mark.parametrize(
+    ("var", "value", "expected"),
+    [
+        ("PORT", "abc", "invalid PORT='abc'"),
+        ("MAX_WORKERS", "abc", "invalid MAX_WORKERS='abc'"),
+        ("MAX_WORKERS", "-1", "max_workers must be >= 1"),
+        ("PDF_DPI", "0", "pdf_dpi must be >= 1"),
+    ],
+)
+def test_bad_config_exits_with_a_readable_message(monkeypatch, var, value, expected):
+    """Misconfiguration must not dump a traceback (a bad PORT even broke --help)."""
+    for name in ("HOST", "PORT", "MAX_WORKERS", "PDF_DPI"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv(var, value)
+    monkeypatch.setattr("sys.argv", ["anydocte"])
+
+    with pytest.raises(SystemExit) as excinfo:
+        cli.main()
+
+    assert expected in str(excinfo.value)
