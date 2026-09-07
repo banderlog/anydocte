@@ -28,8 +28,8 @@ dev = [
 [project.scripts]
 anydocte = "anydocte.cli:main"
 
-[tool.hatch.version]
-path = "src/anydocte/__init__.py"
+[tool.setuptools.dynamic]
+version = { attr = "anydocte.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
