@@ -10,4 +10,6 @@ from ..config import Settings
 
 def extract(image_bytes: bytes, settings: Settings) -> str:
     with Image.open(io.BytesIO(image_bytes)) as img:
-        return pytesseract.image_to_string(img, config=settings.tesseract_config)
+        # pytesseract is untyped, so its return is Any; narrow it here.
+        text: str = pytesseract.image_to_string(img, config=settings.tesseract_config)
+        return text
