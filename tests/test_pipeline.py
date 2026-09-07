@@ -126,6 +126,20 @@ def test_full_pipeline_multipage_scanned_pdf_spans_batches() -> None:
     assert positions == sorted(positions), "batched OCR reordered pages"
 
 
+def test_full_pipeline_legacy_xls_is_unsupported_not_a_crash() -> None:
+    """Legacy OLE2 Office files degrade to empty content, never a 500.
+
+    anydoc has no `xls` format, so routing these to it would raise and become
+    an HTTP 500. This pins the deliberate `Unsupported filetype` outcome.
+    """
+    ole2 = bytes([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]) + b"\x00" * 504
+
+    content, method = extract(ole2, _settings())
+
+    assert method == "Unsupported filetype"
+    assert content == ""
+
+
 def test_full_pipeline_plain_text_native() -> None:
     """Real libmagic sniff of text/* takes the zero-OCR native path."""
     content, method = extract(b"just some plain text\n", _settings())
@@ -140,6 +154,14 @@ def test_full_pipeline_healthy_csv() -> None:
 
     assert method == "Anydoc Native"
     assert "bolt" in content and "nut" in content
+
+
+def test_full_pipeline_single_column_csv_is_plain_text() -> None:
+    """Real libmagic: no delimiter means no `text/csv`, so no anydoc table."""
+    content, method = extract(b"name\nbolt\nnut\n", _settings())
+
+    assert method == "Native Text"
+    assert "bolt" in content and "|" not in content
 
 
 def test_full_pipeline_malformed_csv_is_never_lost() -> None:

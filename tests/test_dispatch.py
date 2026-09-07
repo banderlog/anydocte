@@ -145,6 +145,25 @@ def test_plain_text_is_decoded_natively(sniff):
     assert extractors.extract(b"hello world", SETTINGS) == ("hello world", "Native Text")
 
 
+def test_single_column_csv_is_sniffed_as_plain_text(sniff, monkeypatch):
+    """libmagic needs a delimiter to say `text/csv`.
+
+    A one-column file is reported `text/plain`, so it takes the Native Text
+    path rather than anydoc. Content is preserved, just not tabulated. Pinned
+    so the behaviour is not mistaken for a regression.
+    """
+    sniff("text/plain")
+
+    def unexpected(data, fmt=None, **kw):
+        raise AssertionError("single-column CSV must not reach anydoc")
+
+    monkeypatch.setattr(anydoc, "to_markdown_bytes", unexpected)
+    assert extractors.extract(b"name\nbolt\nnut\n", SETTINGS) == (
+        "name\nbolt\nnut\n",
+        "Native Text",
+    )
+
+
 def test_text_subtype_without_extension_falls_back_to_native_text(sniff):
     """text/* with no mimetypes extension still decodes instead of failing."""
     sniff("text/x-shellscript")
@@ -167,6 +186,64 @@ def test_unknown_binary_is_unsupported(sniff):
         "",
         "Unsupported filetype",
     )
+
+
+@pytest.mark.parametrize(
+    "mime",
+    [
+        "application/vnd.ms-excel",  # -> ".xls"
+        "application/x-ole-storage",  # generic OLE2, guess_extension -> None
+    ],
+)
+def test_legacy_xls_and_bare_ole2_are_unsupported(mime, sniff):
+    """`.xls` must NOT reach anydoc, which has no such format.
+
+    anydoc supports doc/ppt but not xls (`unknown format "xls"`), and
+    autodetect on OLE2 bytes raises `UnsupportedError` — so routing these to
+    it would turn a clean empty result into an HTTP 500. Pinned so a
+    well-meaning "add .xls support" change fails here, not in production.
+    Contrast `.doc`/`.ppt`, which anydoc does support and which therefore
+    route to it (and correctly propagate a 500 when genuinely malformed).
+    """
+    sniff(mime)
+    content, method = extractors.extract(b"\xd0\xcf\x11\xe0garbage", SETTINGS)
+    assert method == "Unsupported filetype"
+    assert content == ""
+
+
+@pytest.mark.parametrize(
+    "mime", ["application/msword", "application/vnd.ms-powerpoint"]
+)
+def test_legacy_doc_and_ppt_do_reach_anydoc(mime, sniff, monkeypatch):
+    """The counterpart: doc/ppt ARE anydoc formats, so they must be routed."""
+    sniff(mime)
+    monkeypatch.setattr(anydoc, "to_markdown_bytes", lambda data, *a, **kw: "<legacy>")
+    assert extractors.extract(b"\xd0\xcf\x11\xe0x", SETTINGS) == (
+        "<legacy>",
+        "Anydoc Native",
+    )
+
+
+def test_anydoc_receives_no_explicit_format_for_office(sniff, monkeypatch):
+    """Office types rely on anydoc's own sniffing; only CSV names a format.
+
+    Asserts the real call shape rather than swallowing any args, so a
+    signature regression cannot hide behind a permissive fake.
+    """
+    sniff("application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+    seen = {}
+
+    def fake(data, fmt=None, **kw):
+        seen["data"] = data
+        seen["fmt"] = fmt
+        seen["kw"] = kw
+        return "<office>"
+
+    monkeypatch.setattr(anydoc, "to_markdown_bytes", fake)
+    assert extractors.extract(b"PK\x03\x04", SETTINGS) == ("<office>", "Anydoc Native")
+    assert seen["fmt"] is None, "office paths must not pass an explicit format"
+    assert seen["kw"] == {}
+    assert seen["data"] == b"PK\x03\x04"
 
 
 def test_settings_passed_through(sniff, monkeypatch):
