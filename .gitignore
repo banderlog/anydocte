@@ -5,6 +5,7 @@ result
 
 .nixcage-vm/
 .opencode/
+.claude/
 experiments/
 *.egg-info/
 build/

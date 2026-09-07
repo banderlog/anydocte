@@ -4,12 +4,29 @@ This repo provides an external document extraction service for integration of an
 
 Anydoc can't do OCR, so pdf_inspector is used to check if PDF needs OCR, than tesseract runs if needed.
 
+File types are detected from the **content** with libmagic, not from the
+filename, so a mislabeled upload still takes the right path:
+
+| Detected type | Handling |
+|---|---|
+| png/jpg/jpeg/tiff/bmp/webp | Tesseract OCR |
+| pdf | pdf_inspector; OCR only for scanned/mixed pages |
+| csv | anydoc → markdown (falls back to plain text if unparseable) |
+| doc/docx/odt/ppt/pptx/rtf/epub/xlsx/ods/odp | anydoc → markdown |
+| any other `text/*` | decoded as UTF-8 directly |
+| anything else | rejected as unsupported |
+
+Note: legacy **`.xls`** (Excel 97–2003) is *not* supported — anydoc has no `xls`
+format — so those uploads return empty content rather than an error. Convert
+them to `.xlsx` first. Legacy `.doc` and `.ppt` are supported.
+
 
 ## Dependencies
 
 - System:
     - tesseract-ocr
     - poppler-utils
+    - libmagic (the `file` package; `python-magic` loads it at runtime)
 - Python:
     - `pyproject.toml` (install with `pip install -e .` or `uv pip install -e .`)
 
@@ -29,12 +46,15 @@ Tesseract languages are heavy, thus I have few versions:
 
 #### 1.1 Bare python way
 
-It implies that tesseract and poppler-utils already installed
+It implies that tesseract, poppler-utils and libmagic already installed
 
 ```bash
 # install the package with dependencies in a venv
 python -m venv venv
 ./venv/bin/pip install -e .
+
+# if you get "ImportError: failed to find libmagic", point the loader at it,
+# e.g. on NixOS:  export LD_LIBRARY_PATH=$(dirname $(readlink -f $(which file)))/../lib
 
 # start with args
 ./venv/bin/anydocte --tesseract-config "-l eng+rus+ukr --psm 3" --max-workers 8 --port 5005
@@ -69,7 +89,7 @@ docker load < result
 # start container
 docker run --rm -p 5005:5005 \
   -e PDF_DPI=300 \
-  anydocte:0.1.0-full
+  anydocte:0.2.0-full
 ```
 
 
