@@ -14,7 +14,7 @@ def settings():
 @pytest.fixture()
 def app(settings, monkeypatch):
     monkeypatch.setattr(
-        app_module, "extract", lambda filename, data, s: (data.decode(), "Fake Method")
+        app_module, "extract", lambda data, s: (data.decode(), "Fake Method")
     )
     return create_app(settings)
 
@@ -61,7 +61,7 @@ def test_process_empty_payload_returns_400(client):
 
 
 def test_process_failure_returns_500(app, monkeypatch):
-    def boom(filename, data, s):
+    def boom(data, s):
         raise RuntimeError("kaboom")
 
     monkeypatch.setattr(app_module, "extract", boom)
