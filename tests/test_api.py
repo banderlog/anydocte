@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -14,7 +16,7 @@ def settings():
 @pytest.fixture()
 def app(settings, monkeypatch):
     monkeypatch.setattr(
-        app_module, "extract", lambda filename, data, s: (data.decode(), "Fake Method")
+        app_module, "extract", lambda data, s: (data.decode(), "Fake Method")
     )
     return create_app(settings)
 
@@ -61,7 +63,7 @@ def test_process_empty_payload_returns_400(client):
 
 
 def test_process_failure_returns_500(app, monkeypatch):
-    def boom(filename, data, s):
+    def boom(data, s):
         raise RuntimeError("kaboom")
 
     monkeypatch.setattr(app_module, "extract", boom)
@@ -69,3 +71,34 @@ def test_process_failure_returns_500(app, monkeypatch):
         r = c.post("/process", content=b"x", headers={"X-Filename": "a.txt"})
     assert r.status_code == 500
     assert r.json() == {"detail": "Internal pipeline crash: kaboom"}
+
+
+def test_process_without_filename_header_uses_default(app, caplog):
+    """X-Filename is optional; §3 documents `document.docx` as the default."""
+    with caplog.at_level("INFO", logger="extractor-proxy"):
+        with TestClient(app) as c:
+            r = c.post("/process", content=b"hi")
+
+    assert r.status_code == 200
+    assert r.json() == {"page_content": "hi", "metadata": {}}
+    assert "document.docx" in caplog.text
+
+
+def test_extraction_completes_across_shutdown(settings, monkeypatch):
+    """The executor drains on shutdown instead of killing in-flight work."""
+    finished = []
+
+    def slow(data, s):
+        time.sleep(0.3)
+        finished.append(True)
+        return "done", "Slow Method"
+
+    monkeypatch.setattr(app_module, "extract", slow)
+    app = create_app(settings)
+
+    with TestClient(app) as c:
+        r = c.post("/process", content=b"x", headers={"X-Filename": "a.txt"})
+
+    assert r.status_code == 200
+    assert r.json() == {"page_content": "done", "metadata": {}}
+    assert finished, "extraction was killed instead of draining"

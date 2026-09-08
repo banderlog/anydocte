@@ -1,8 +1,8 @@
 { pkgs ? import <nixpkgs> {} }:
 
 let
-  init_file = builtins.readFile src/anydocte/__init__.py;
-  version = builtins.head (builtins.match ".*__version__ = \"(.*)\".*" init_file);
+  pyproject = builtins.fromTOML (builtins.readFile ./pyproject.toml);
+  version = pyproject.project.version;
 
   runtimePackages = with pkgs; [
     python3
@@ -10,14 +10,12 @@ let
     tesseract  # all languages included
     poppler-utils
     zlib
-    glib
     cacert
     file
   ];
 
   libPath = pkgs.lib.makeLibraryPath [
     pkgs.zlib
-    pkgs.glib
     pkgs.file
   ];
 

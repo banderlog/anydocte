@@ -5,7 +5,7 @@ import logging
 from collections.abc import AsyncIterator
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Any, Optional
 
 from fastapi import FastAPI, Header, HTTPException, Request
 from fastapi.responses import JSONResponse
@@ -23,7 +23,9 @@ def create_app(settings: Settings) -> FastAPI:
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         yield
-        executor.shutdown(wait=False)
+        # Drain in-flight extractions: an OCR job killed mid-flight would
+        # fail a request that was about to succeed.
+        executor.shutdown(wait=True)
 
     app = FastAPI(
         title="Open WebUI Universal Document Extraction Proxy",
@@ -33,8 +35,11 @@ def create_app(settings: Settings) -> FastAPI:
     app.state.settings = settings
     app.state.executor = executor
 
+    # Both handlers are annotated `Any` on purpose: a concrete return type
+    # would make FastAPI infer a response_model and filter the payload, and
+    # the exact response shapes are frozen by CONSTITUTION.md §3.
     @app.get("/health")
-    async def health_check():
+    async def health_check() -> Any:
         return {
             "status": "healthy",
             "max_workers": settings.max_workers,
@@ -52,7 +57,7 @@ def create_app(settings: Settings) -> FastAPI:
     async def extract_content(
         request: Request,
         x_filename: Optional[str] = Header(None, alias="X-Filename"),
-    ):
+    ) -> Any:
         filename = x_filename or "document.docx"
         file_bytes, filename = await ingest(request, filename)
 

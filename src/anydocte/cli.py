@@ -8,7 +8,7 @@ import sys
 import uvicorn
 
 from .app import create_app
-from .config import Settings
+from .config import Settings, env_int
 
 logger = logging.getLogger("extractor-proxy")
 
@@ -32,7 +32,7 @@ def build_arg_parser(settings: Settings) -> argparse.ArgumentParser:
     parser.add_argument(
         "--port",
         type=int,
-        default=int(os.getenv("PORT", 5005)),
+        default=env_int("PORT", 5005),
         help="Port to bind to",
     )
     parser.add_argument(
@@ -66,8 +66,13 @@ def settings_from_args(args: argparse.Namespace) -> Settings:
 
 def main() -> None:
     configure_logging()
-    args = build_arg_parser(Settings.from_env()).parse_args()
-    settings = settings_from_args(args)
+    # Misconfiguration is a user error: report it on one line and exit 2
+    # (argparse's own convention) instead of dumping a traceback.
+    try:
+        args = build_arg_parser(Settings.from_env()).parse_args()
+        settings = settings_from_args(args)
+    except ValueError as e:
+        raise SystemExit(f"anydocte: {e}") from None
 
     app = create_app(settings)
     logger.info(
