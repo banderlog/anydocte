@@ -1,7 +1,7 @@
 # Anydocte
 
-This repo provides an external document extraction service for integration of anydoc with openwebui.
-But it has FAST/REST API and can be used anywhere.
+This repo provides an external document extraction service for integration of anydoc with openwebui.  
+But it has a FAST/REST API, thus it can be used anywhere.
 
 Anydoc can't do OCR, so pdf_inspector is used to check if PDF needs OCR, than tesseract runs if needed.
 
