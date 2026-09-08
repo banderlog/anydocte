@@ -29,8 +29,6 @@ ANYDOC_EXTENSIONS = (
     ".odp",
 )
 
-UNSUPPORTED_MESSAGE = "Unsupported filetype"
-
 
 def _decode_text(data: bytes) -> str:
     """Best-effort UTF-8 decode; undecodable bytes are replaced, never raised."""
@@ -71,4 +69,4 @@ def extract(data: bytes, settings: Settings) -> tuple[str, str]:
     if mime_type.startswith("text"):
         return _decode_text(data), "Native Text"
 
-    return "", UNSUPPORTED_MESSAGE
+    return "", "Unsupported filetype"
