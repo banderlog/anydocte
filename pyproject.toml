@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "anydocte"
-dynamic = ["version"]
-description = "Universal anydoc+tesseract document extraction proxy for Open WebUI"
+version = "0.3.0"
+description = "Universal anydoc+tesseract document extraction server"
 requires-python = ">=3.9"
 dependencies = [
     "fastapi>=0.110.0",
@@ -22,7 +22,6 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "mypy>=1.10",
-    "httpx2>=1.0",
 ]
 
 [project.scripts]

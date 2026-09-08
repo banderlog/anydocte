@@ -44,9 +44,9 @@ until anydoc grows real support; a test pins this. Note `.doc`/`.ppt` *are*
 anydoc formats and do route to it.
 
 The project version is declared in **one** place:
-`src/anydocte/__init__.py` (`__version__`). `pyproject.toml` derives it via
-`[tool.setuptools.dynamic] version = { attr = "anydocte.__version__" }`, and
-both nix images parse the same file. Never hardcode it a second time.
+`pyproject.toml`. `src/anydocte/__init__.py` (`__version__`) derives it via
+`importlib.metadata.version("anydocte")`, and both nix images parse the same file.
+Never hardcode it a second time.
 
 ## 2. Hard rules
 

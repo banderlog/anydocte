@@ -1,24 +1,26 @@
 # Anydocte
 
 This repo provides an external document extraction service for integration of anydoc with openwebui.
+But it has FAST/REST API and can be used anywhere.
 
 Anydoc can't do OCR, so pdf_inspector is used to check if PDF needs OCR, than tesseract runs if needed.
 
 File types are detected from the **content** with libmagic, not from the
 filename, so a mislabeled upload still takes the right path:
 
-| Detected type | Handling |
-|---|---|
-| png/jpg/jpeg/tiff/bmp/webp | Tesseract OCR |
-| pdf | pdf_inspector; OCR only for scanned/mixed pages |
-| csv | anydoc → markdown (falls back to plain text if unparseable) |
-| doc/docx/odt/ppt/pptx/rtf/epub/xlsx/ods/odp | anydoc → markdown |
-| any other `text/*` | decoded as UTF-8 directly |
-| anything else | rejected as unsupported |
+ | Detected type                               | Handling                                                    |
+ | ---                                         | ---                                                         |
+ | png/jpg/jpeg/tiff/bmp/webp                  | Tesseract OCR                                               |
+ | pdf                                         | pdf_inspector; OCR only for scanned/mixed pages             |
+ | csv                                         | anydoc → markdown (falls back to plain text if unparseable) |
+ | doc/docx/odt/ppt/pptx/rtf/epub/xlsx/ods/odp | anydoc → markdown                                           |
+ | any other `text/*`                          | decoded as UTF-8 directly                                   |
+ | anything else                               | rejected as unsupported                                     |
 
-Note: legacy **`.xls`** (Excel 97–2003) is *not* supported — anydoc has no `xls`
-format — so those uploads return empty content rather than an error. Convert
-them to `.xlsx` first. Legacy `.doc` and `.ppt` are supported.
+> [!note]
+> legacy **`.xls`** (Excel 97–2003) is *not* supported — anydoc has no `xls`
+> format — so those uploads return empty content rather than an error.
+> Convert them to `.xlsx` first.
 
 
 ## Dependencies
@@ -89,7 +91,7 @@ docker load < result
 # start container
 docker run --rm -p 5005:5005 \
   -e PDF_DPI=300 \
-  anydocte:0.2.0-full
+  anydocte:0.3.0-full
 ```
 
 
@@ -98,6 +100,7 @@ docker run --rm -p 5005:5005 \
 1. Admin -> Settings -> Documents -> Select "External"
 2. Fill "Document Loader URL"
 3. Fill some random symbols in "API key"
+4. Add `image/*` to "Supported Media MIME Types"
 
 ---
 
