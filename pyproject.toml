@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "anydocte"
-version = "0.4.0"
+version = "0.4.1"
 description = "Universal anydoc+tesseract document extraction server"
 requires-python = ">=3.9"
 dependencies = [
@@ -14,7 +14,7 @@ dependencies = [
     "pytesseract>=0.3.10",
     "pdf2image>=1.17.0",
     "Pillow>=10.2.0",
-    "pdf_inspector>=1.25.2",
+    "pdf_inspector>=1.26.1",
     "python-magic>=0.4.27"
 ]
 
